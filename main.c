@@ -46,16 +46,15 @@ void converter_pallet (struct BITMAPFILEHEADER fh, struct BITMAPINFOHEADER fi, B
         exit(-1);
     }
     struct CHANNELS rgbset;
-    int index;
     for (int i = 1; i <= pow(2,fi.biBitCount); i++){
-        index = fh.bfOffBits - 4 * i;
+        int index = fh.bfOffBits - 4 * i;
         rgbset.b = bitmap[index];
         rgbset.g = bitmap[index + 1];
         rgbset.r = bitmap[index + 2];
         rgbset.grey = 0.299*rgbset.r + 0.587*rgbset.g + 0.114*rgbset.b;
-        for (int j=0;j<3;j++){
-            bitmap[index + j] = rgbset.grey;
-        }
+        bitmap[index ] = rgbset.grey;
+        bitmap[index + 1] = rgbset.grey;
+        bitmap[index + 2] = rgbset.grey;
     }
     int write_success = fwrite(bitmap,1,fh.bfSize,f_converted);
     fclose(f_converted);
@@ -74,21 +73,20 @@ void converter_no_pallet(struct BITMAPFILEHEADER fh, BYTE *bitmap, char *file_pa
         printf("Cannot create file.");
         exit(-1);
     }
-    int i,j;
     struct CHANNELS rgbset;
     if ((fh.bfSize-fh.bfOffBits)%3!=0){
         printf("Error of file structure.");
         exit(-1);
     }
-    int index = fh.bfOffBits+3*i;
-    for (i=0;i<(fh.bfSize-fh.bfOffBits)/3;i++){
+    for (int i=0;i<(fh.bfSize-fh.bfOffBits)/3;i++){
+        int index = fh.bfOffBits+3*i;
         rgbset.b = bitmap[index];
         rgbset.g = bitmap[index + 1];
         rgbset.r = bitmap[index + 2];
         rgbset.grey = 0.299*rgbset.r + 0.587*rgbset.g + 0.114*rgbset.b;
-        for (j=0;j<3;j++){
-            bitmap[index + j] = rgbset.grey;
-        }
+        bitmap[index ] = rgbset.grey;
+        bitmap[index + 1] = rgbset.grey;
+        bitmap[index + 2] = rgbset.grey;
     }
     int write_success = fwrite(bitmap,1,fh.bfSize,f_converted);
     fclose(f_converted);
