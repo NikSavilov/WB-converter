@@ -8,6 +8,7 @@ unsigned int read_n_bytes(int n,FILE *f_source) {
     fread(x,1,n,f_source);
     for (int i=0; i < n; i++)
         n_bytes += x[i] << (8 * i);
+    free(x);
     return n_bytes;
 };
 struct BITMAPFILEHEADER {
