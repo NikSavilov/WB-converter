@@ -2,15 +2,13 @@
 #include <stdlib.h>
 #include <afxres.h>
 #include <math.h>
-static FILE *f_source;
-static FILE *f_converted;
-unsigned int read_4bytes() {
-    unsigned int x = fgetc(f_source) + (fgetc(f_source) << 8) + (fgetc(f_source) << 16) + (fgetc(f_source) << 24);
-    return x;
-};
-unsigned int read_2bytes() {
-    unsigned int x = fgetc(f_source) + (fgetc(f_source) << 8);
-    return x;
+unsigned int read_n_bytes(int n,FILE *f_source) {
+    BYTE *x = malloc(n);
+    unsigned int n_bytes = 0;
+    fread(x,1,n,f_source);
+    for (int i=0; i < n; i++)
+        n_bytes += x[i] << (8 * i);
+    return n_bytes;
 };
 struct BITMAPFILEHEADER {
     unsigned int    signature;
@@ -21,43 +19,40 @@ struct BITMAPINFOHEADER {
     unsigned        version;
     unsigned short  biBitCount;
 };
-struct BITMAPFILEHEADER read_head() {
+struct BITMAPFILEHEADER read_head(FILE *f_source) {
     struct BITMAPFILEHEADER t;
     fseek(f_source,0,SEEK_SET);
-    t.signature = read_2bytes();
-    t.bfSize = read_4bytes();
+    t.signature = read_n_bytes(2,f_source);
+    t.bfSize = read_n_bytes(4,f_source);
     fseek(f_source,4,SEEK_CUR);
-    t.bfOffBits = read_4bytes();
+    t.bfOffBits = read_n_bytes(4,f_source);
     return t;
 };
-struct BITMAPINFOHEADER read_info() {
+struct BITMAPINFOHEADER read_info(FILE *f_source) {
     struct BITMAPINFOHEADER t;
-    t.version = read_4bytes();
+    t.version = read_n_bytes(4,f_source);
     (t.version < 40) ? fseek(f_source,24,SEEK_SET) : fseek(f_source,28,SEEK_SET);
-    t.biBitCount = fgetc(f_source) + (fgetc(f_source) << 8);
+    t.biBitCount = read_n_bytes(2,f_source);
     return t;
 };
 struct CHANNELS {
     BYTE r, g, b, grey;
 };
-void converter_pallet (struct BITMAPFILEHEADER fh, struct BITMAPINFOHEADER fi,char *file_path_converted){
+void converter_pallet (struct BITMAPFILEHEADER fh, struct BITMAPINFOHEADER fi, BYTE *bitmap, char *file_path_converted){
+    FILE *f_converted;
     if ((f_converted = fopen(file_path_converted, "wb"))==NULL) {
         printf("Cannot create file.\n");
         exit(-1);
     }
-    fseek(f_source,0,SEEK_SET);
-    BYTE *bitmap = malloc(fh.bfSize);
-    fread(bitmap,1,fh.bfSize,f_source);
-    int i;
     struct CHANNELS rgbset;
-    for (i = 1; i <= pow(2,fi.biBitCount); i++){
-        rgbset.b = bitmap[fh.bfOffBits - 4 * i];
-        rgbset.g = bitmap[fh.bfOffBits - 4 * i + 1];
-        rgbset.r = bitmap[fh.bfOffBits - 4 * i + 2];
+    int index;
+    for (int i = 1; i <= pow(2,fi.biBitCount); i++){
+        index = fh.bfOffBits - 4 * i;
+        rgbset.b = bitmap[index];
+        rgbset.g = bitmap[index + 1];
+        rgbset.r = bitmap[index + 2];
         rgbset.grey = 0.299*rgbset.r + 0.587*rgbset.g + 0.114*rgbset.b;
-        bitmap[fh.bfOffBits - 4 * i] = rgbset.grey;
-        bitmap[fh.bfOffBits - 4 * i + 1] = rgbset.grey;
-        bitmap[fh.bfOffBits - 4 * i + 2] = rgbset.grey;
+        bitmap[index] =  bitmap[index+1] =  bitmap[index+2] = rgbset.grey;
     }
     int write_success = fwrite(bitmap,1,fh.bfSize,f_converted);
     if (write_success != fh.bfSize){
@@ -67,19 +62,13 @@ void converter_pallet (struct BITMAPFILEHEADER fh, struct BITMAPINFOHEADER fi,ch
     else {
         printf("It seems that the converting was successful. Congratulations!");
     }
+    free(bitmap);
     fclose(f_converted);
-    fclose(f_source);
 }
-void converter_no_pallet(struct BITMAPFILEHEADER fh, struct BITMAPINFOHEADER fi,char *file_path_converted){
+void converter_no_pallet(struct BITMAPFILEHEADER fh, BYTE *bitmap, char *file_path_converted){
+    FILE *f_converted;
     if ((f_converted = fopen(file_path_converted,"wb"))==NULL){
         printf("Cannot create file.");
-        exit(-1);
-    }
-    BYTE *bitmap = malloc(fh.bfSize);
-    fseek(f_source,0,SEEK_SET);
-    int read_success = fread(bitmap,1,fh.bfSize,f_source);
-    if (read_success != fh.bfSize) {
-        printf("Error of reading.");
         exit(-1);
     }
     int i,j;
@@ -88,13 +77,14 @@ void converter_no_pallet(struct BITMAPFILEHEADER fh, struct BITMAPINFOHEADER fi,
         printf("Error of file structure.");
         exit(-1);
     }
+    int index = fh.bfOffBits+3*i;
     for (i=0;i<(fh.bfSize-fh.bfOffBits)/3;i++){
-        rgbset.b = bitmap[fh.bfOffBits+3*i];
-        rgbset.g = bitmap[fh.bfOffBits+3*i+1];
-        rgbset.r = bitmap[fh.bfOffBits+3*i+2];
+        rgbset.b = bitmap[index];
+        rgbset.g = bitmap[index + 1];
+        rgbset.r = bitmap[index + 2];
         rgbset.grey = 0.299*rgbset.r + 0.587*rgbset.g + 0.114*rgbset.b;
         for (j=0;j<3;j++){
-            bitmap[fh.bfOffBits+3*i+j] = rgbset.grey;
+            bitmap[index + j] = rgbset.grey;
         }
     }
     int write_success = fwrite(bitmap,1,fh.bfSize,f_converted);
@@ -105,22 +95,44 @@ void converter_no_pallet(struct BITMAPFILEHEADER fh, struct BITMAPINFOHEADER fi,
     else {
         printf("It seems that the converting was successful. Congratulations!");
     }
+    free(bitmap);
     fclose(f_converted);
-    fclose(f_source);
 }
-int main(int args, char **file_path){
-    if ((f_source = fopen(file_path[1], "rb")) == NULL) {
+int main(int args, char **argv){
+    char *file_path_converted,*file_path_current;
+    if (args == 3){
+        file_path_current = argv[1];
+        file_path_converted = argv[2];
+    }
+    else if (args == 2){
+        file_path_converted = argv[1];
+        file_path_current = argv[1];
+    }
+    else {
+        printf("No arguments detected.");
+        exit(-1);
+    }
+    FILE *f_source;
+    if ((f_source = fopen(file_path_current, "rb")) == NULL) {
         printf("Cannot open file.\n");
         exit(-1);
     }
-    struct BITMAPFILEHEADER fh = read_head();
-    struct BITMAPINFOHEADER fi = read_info();
+    struct BITMAPFILEHEADER fh = read_head(f_source);
+    struct BITMAPINFOHEADER fi = read_info(f_source);
     if (fh.signature != 0x4d42){
         printf("Unknown signature.\n");
         exit(-1);
     }
     printf("File's info (signature %x).\nSize: %d bytes.\nBitmap start position: %d.\nBits per pixel: %d\n",fh.signature,fh.bfSize,fh.bfOffBits,fi.biBitCount);
-    (fi.biBitCount == 4 || fi.biBitCount == 8) ? converter_pallet(fh,fi,file_path[2]): 0;
-    (fi.biBitCount == 24) ? converter_no_pallet(fh,fi,file_path[2]): 0;
+    BYTE *bitmap = malloc(fh.bfSize);
+    fseek(f_source,0,SEEK_SET);
+    int read_success = fread(bitmap,1,fh.bfSize,f_source);
+    if (read_success != fh.bfSize) {
+        printf("Error of reading.--%d-%d--",read_success,fh.bfSize);
+        exit(-1);
+    }
+    fclose(f_source);
+    (fi.biBitCount == 4 || fi.biBitCount == 8) ? converter_pallet(fh,fi,bitmap,file_path_converted): 0;
+    (fi.biBitCount == 24) ? converter_no_pallet(fh,bitmap,file_path_converted): 0;
     return 0;
 }
