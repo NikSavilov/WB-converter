@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <afxres.h>
 #include <math.h>
-
 static FILE *f_source;
 static FILE *f_converted;
 unsigned int read_4bytes() {
@@ -13,7 +12,6 @@ unsigned int read_2bytes() {
     unsigned int x = fgetc(f_source) + (fgetc(f_source) << 8);
     return x;
 };
-
 struct BITMAPFILEHEADER {
     unsigned int    signature;
     unsigned long   bfSize;
@@ -42,7 +40,6 @@ struct BITMAPINFOHEADER read_info() {
 struct CHANNELS {
     BYTE r, g, b, grey;
 };
-
 void converter_pallet (struct BITMAPFILEHEADER fh, struct BITMAPINFOHEADER fi,char *file_path_converted){
     if ((f_converted = fopen(file_path_converted, "wb"))==NULL) {
         printf("Cannot create file.\n");
@@ -111,7 +108,6 @@ void converter_no_pallet(struct BITMAPFILEHEADER fh, struct BITMAPINFOHEADER fi,
     fclose(f_converted);
     fclose(f_source);
 }
-
 int main(int args, char **file_path){
     if ((f_source = fopen(file_path[1], "rb")) == NULL) {
         printf("Cannot open file.\n");
