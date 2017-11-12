@@ -52,9 +52,12 @@ void converter_pallet (struct BITMAPFILEHEADER fh, struct BITMAPINFOHEADER fi, B
         rgbset.g = bitmap[index + 1];
         rgbset.r = bitmap[index + 2];
         rgbset.grey = 0.299*rgbset.r + 0.587*rgbset.g + 0.114*rgbset.b;
-        bitmap[index] =  bitmap[index+1] =  bitmap[index+2] = rgbset.grey;
+        for (int j=0;j<3;j++){
+            bitmap[index + j] = rgbset.grey;
+        }
     }
     int write_success = fwrite(bitmap,1,fh.bfSize,f_converted);
+    fclose(f_converted);
     if (write_success != fh.bfSize){
         printf("Error of writing.");
         exit(-1);
@@ -63,7 +66,6 @@ void converter_pallet (struct BITMAPFILEHEADER fh, struct BITMAPINFOHEADER fi, B
         printf("It seems that the converting was successful. Congratulations!");
     }
     free(bitmap);
-    fclose(f_converted);
 }
 void converter_no_pallet(struct BITMAPFILEHEADER fh, BYTE *bitmap, char *file_path_converted){
     FILE *f_converted;
@@ -88,6 +90,7 @@ void converter_no_pallet(struct BITMAPFILEHEADER fh, BYTE *bitmap, char *file_pa
         }
     }
     int write_success = fwrite(bitmap,1,fh.bfSize,f_converted);
+    fclose(f_converted);
     if (write_success != fh.bfSize){
         printf("Error of writing.");
         exit(-1);
@@ -96,15 +99,14 @@ void converter_no_pallet(struct BITMAPFILEHEADER fh, BYTE *bitmap, char *file_pa
         printf("It seems that the converting was successful. Congratulations!");
     }
     free(bitmap);
-    fclose(f_converted);
 }
-int main(int args, char **argv){
+int main(int argc, char **argv){
     char *file_path_converted,*file_path_current;
-    if (args == 3){
+    if (argc == 3){
         file_path_current = argv[1];
         file_path_converted = argv[2];
     }
-    else if (args == 2){
+    else if (argc == 2){
         file_path_converted = argv[1];
         file_path_current = argv[1];
     }
