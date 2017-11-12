@@ -46,8 +46,9 @@ void converter_pallet (struct BITMAPFILEHEADER fh, struct BITMAPINFOHEADER fi, B
         exit(-1);
     }
     struct CHANNELS rgbset;
+    int index;
     for (int i = 1; i <= pow(2,fi.biBitCount); i++){
-        int index = fh.bfOffBits - 4 * i;
+        index = fh.bfOffBits - 4 * i;
         rgbset.b = bitmap[index];
         rgbset.g = bitmap[index + 1];
         rgbset.r = bitmap[index + 2];
@@ -78,8 +79,9 @@ void converter_no_pallet(struct BITMAPFILEHEADER fh, BYTE *bitmap, char *file_pa
         printf("Error of file structure.");
         exit(-1);
     }
+    int index;
     for (int i=0;i<(fh.bfSize-fh.bfOffBits)/3;i++){
-        int index = fh.bfOffBits+3*i;
+        index = fh.bfOffBits+3*i;
         rgbset.b = bitmap[index];
         rgbset.g = bitmap[index + 1];
         rgbset.r = bitmap[index + 2];
