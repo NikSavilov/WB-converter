@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <afxres.h>
 #include <math.h>
+
 unsigned int read_n_bytes(int n,FILE *f_source) {
     BYTE *x = malloc(n);
     unsigned int n_bytes = 0;
@@ -38,6 +39,11 @@ struct BITMAPINFOHEADER read_info(FILE *f_source) {
 };
 struct CHANNELS {
     BYTE r, g, b, grey;
+};
+struct FLAG {
+    int     om,     // overwrite mode
+            i,      // input folder
+            o;      // output folder
 };
 void converter_pallet (struct BITMAPFILEHEADER fh, struct BITMAPINFOHEADER fi, BYTE *bitmap, char *file_path_converted){
     FILE *f_converted;
@@ -103,18 +109,15 @@ void converter_no_pallet(struct BITMAPFILEHEADER fh, BYTE *bitmap, char *file_pa
 }
 int main(int argc, char **argv){
     char *file_path_converted,*file_path_current;
-    if (argc == 3){
-        file_path_current = argv[1];
-        file_path_converted = argv[2];
+    struct FLAG f = {0,0,0};
+    for (int k = 1; k < argc;k++){
+        (argv[k] == "-om")                          ?   f.om = 1  : 0;
+        (strstr ("-i=",argv[k]) - argv[k] == 0)     ?   f.i  = k  : 0;
+        (strstr ("-o=",argv[k]) - argv[k] == 0)     ?   f.o  = k  : 0;
     }
-    else if (argc == 2){
-        file_path_converted = argv[1];
-        file_path_current = argv[1];
-    }
-    else {
-        printf("No arguments detected.");
-        exit(-1);
-    }
+    file_path_current = argv[f.i][3] ;
+    file_path_converted = argv[f.o][3];
+    ((f.om == 1) && (f.o != 0)) ? file_path_converted = file_path_current : 0;
     FILE *f_source;
     if ((f_source = fopen(file_path_current, "rb")) == NULL) {
         printf("Cannot open file.\n");
@@ -135,7 +138,10 @@ int main(int argc, char **argv){
         exit(-1);
     }
     fclose(f_source);
-    (fi.biBitCount == 4 || fi.biBitCount == 8) ? converter_pallet(fh,fi,bitmap,file_path_converted): 0;
-    (fi.biBitCount == 24) ? converter_no_pallet(fh,bitmap,file_path_converted): 0;
+    switch (fi.biBitCount) {
+        case 4:
+        case 8:     converter_pallet(fh,fi,bitmap,file_path_converted); break;
+        case 24:    converter_no_pallet(fh,bitmap,file_path_converted);
+    }
     return 0;
 }
