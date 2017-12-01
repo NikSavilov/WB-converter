@@ -3,6 +3,16 @@
 #include <afxres.h>
 #include <math.h>
 
+char *copy_substr(char *str1,int pos){
+    char *str2 = malloc(strlen(str1)-pos+1);
+    int d=0;
+    for (int i=pos;i<strlen(str1);i++){
+        str2[d] = str1[i];
+        d++;
+    }
+    str2[d]='\0';
+    return str2;
+}
 unsigned int read_n_bytes(int n,FILE *f_source) {
     BYTE *x = malloc(n);
     unsigned int n_bytes = 0;
@@ -48,7 +58,7 @@ struct FLAG {
 void converter_pallet (struct BITMAPFILEHEADER fh, struct BITMAPINFOHEADER fi, BYTE *bitmap, char *file_path_converted){
     FILE *f_converted;
     if ((f_converted = fopen(file_path_converted, "wb"))==NULL) {
-        printf("Cannot create file.\n");
+        printf("Can't create file.\n");
         exit(-1);
     }
     struct CHANNELS rgbset;
@@ -77,7 +87,7 @@ void converter_pallet (struct BITMAPFILEHEADER fh, struct BITMAPINFOHEADER fi, B
 void converter_no_pallet(struct BITMAPFILEHEADER fh, BYTE *bitmap, char *file_path_converted){
     FILE *f_converted;
     if ((f_converted = fopen(file_path_converted,"wb"))==NULL){
-        printf("Cannot create file.");
+        printf("Can't create file.");
         exit(-1);
     }
     struct CHANNELS rgbset;
@@ -111,16 +121,27 @@ int main(int argc, char **argv){
     char *file_path_converted,*file_path_current;
     struct FLAG f = {0,0,0};
     for (int k = 1; k < argc;k++){
-        (argv[k] == "-om")                          ?   f.om = 1  : 0;
-        (strstr ("-i=",argv[k]) - argv[k] == 0)     ?   f.i  = k  : 0;
-        (strstr ("-o=",argv[k]) - argv[k] == 0)     ?   f.o  = k  : 0;
+        printf("%s\n",argv[k]);
+        if (strcmp(argv[k],"-om") == 0) {
+            f.om = 1;
+        }
+        else if (strstr(argv[k],"-i=") == argv[k]){
+            f.i  = k;
+        }
+        else if (strstr(argv[k],"-o=") == argv[k]){
+            f.o  = k;
+        }
     }
-    file_path_current = argv[f.i][3] ;
-    file_path_converted = argv[f.o][3];
-    ((f.om == 1) && (f.o != 0)) ? file_path_converted = file_path_current : 0;
+    if (f.om * f.o) {
+        printf("Invalid keys. You can't use overwrite mode and -o key together.\n");
+        exit(-1);
+    }
+    file_path_converted = copy_substr(argv[f.o],3);
+    file_path_current = copy_substr(argv[f.i],3);
+    ((f.om == 1)) ? file_path_converted = file_path_current : 0;
     FILE *f_source;
     if ((f_source = fopen(file_path_current, "rb")) == NULL) {
-        printf("Cannot open file.\n");
+        printf("Can't open file.\n");
         exit(-1);
     }
     struct BITMAPFILEHEADER fh = read_head(f_source);
@@ -130,7 +151,8 @@ int main(int argc, char **argv){
         exit(-1);
     }
     printf("File's info (signature %x).\nSize: %d bytes.\nBitmap start position: %d.\nBits per pixel: %d\n",fh.signature,fh.bfSize,fh.bfOffBits,fi.biBitCount);
-    BYTE *bitmap = malloc(fh.bfSize);
+    BYTE *bitmap;
+    if (( bit= malloc(fh.bfSize) == NULL);
     fseek(f_source,0,SEEK_SET);
     int read_success = fread(bitmap,1,fh.bfSize,f_source);
     if (read_success != fh.bfSize) {
