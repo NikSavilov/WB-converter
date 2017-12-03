@@ -5,6 +5,8 @@
 #include <afxres.h>
 #include <math.h>
 
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+
 /*______Structures______*/
 struct BITMAPFILEHEADER {
     unsigned int    signature;
@@ -27,7 +29,6 @@ struct FLAG {
 /*___Functions to be described in source.c___*/
 struct BITMAPFILEHEADER read_head(FILE *f_source);
 struct BITMAPINFOHEADER read_info(FILE *f_source);
-char *copy_substr(char *str1,int pos);
 void mem_check(BYTE *x);
 void rgb_con(BYTE *bitmap,int index);
 void converter_pallet (struct BITMAPFILEHEADER fh, struct BITMAPINFOHEADER fi, BYTE *bitmap, char *file_path_converted);

@@ -4,7 +4,6 @@ int main(int argc, char **argv){
     char *file_path_converted,*file_path_current;
     struct FLAG f = {0,0,0};
     for (int k = 1; k < argc;k++){
-        printf("%s\n",argv[k]);
         if (strcmp(argv[k],"-om") == 0) {
             f.om = 1;
         }
@@ -19,8 +18,10 @@ int main(int argc, char **argv){
         printf("Invalid keys. You can't use overwrite mode and -o key together.\n");
         exit(-1);
     }
-    file_path_converted = copy_substr(argv[f.o],3);
-    file_path_current = copy_substr(argv[f.i],3);
+    file_path_converted = malloc(MAX(strlen(argv[f.o]),strlen(argv[f.i]))); // MAX - not to lose a part of path when using -om key.
+    file_path_current = malloc(strlen(argv[f.i]));
+    strcpy(file_path_converted,argv[f.o] + 3);
+    strcpy(file_path_current,argv[f.i] + 3);
     ((f.om == 1)) ? file_path_converted = file_path_current : 0;
     FILE *f_source;
     if ((f_source = fopen(file_path_current, "rb")) == NULL) {
@@ -43,10 +44,14 @@ int main(int argc, char **argv){
         exit(-1);
     }
     fclose(f_source);
+    free(f_source);
     switch (fi.biBitCount) {
         case 4:
         case 8:     converter_pallet(fh,fi,bitmap,file_path_converted); break;
         case 24:    converter_no_pallet(fh,bitmap,file_path_converted);
     }
+    free(file_path_converted);
+    free(file_path_current);
+    free(bitmap);
     return 0;
 }

@@ -21,16 +21,6 @@ void mem_check(BYTE *x){
         exit(-1);
     };
 }
-char *copy_substr(char *str1,int pos){
-    char *str2 = malloc(strlen(str1)-pos+1);
-    int d=0;
-    for (int i=pos;i<strlen(str1);i++){
-        str2[d] = str1[i];
-        d++;
-    }
-    str2[d]='\0';
-    return str2;
-}
 unsigned int read_n_bytes(int n,FILE *f_source) {
     BYTE *x = malloc(n);
     mem_check(x);
@@ -57,7 +47,6 @@ void converter_pallet (struct BITMAPFILEHEADER fh, struct BITMAPINFOHEADER fi, B
         printf("Can't create file.\n");
         exit(-1);
     }
-    struct CHANNELS rgbset;
     int index;
     for (int i = 1; i <= pow(2,fi.biBitCount); i++){
         index = fh.bfOffBits - 4 * i;
@@ -72,7 +61,7 @@ void converter_pallet (struct BITMAPFILEHEADER fh, struct BITMAPINFOHEADER fi, B
     else {
         printf("It seems that the converting was successful. Congratulations!");
     }
-    free(bitmap);
+    free(f_converted);
 }
 void converter_no_pallet(struct BITMAPFILEHEADER fh, BYTE *bitmap, char *file_path_converted){
     FILE *f_converted;
@@ -80,7 +69,6 @@ void converter_no_pallet(struct BITMAPFILEHEADER fh, BYTE *bitmap, char *file_pa
         printf("Can't create file.");
         exit(-1);
     }
-    struct CHANNELS rgbset;
     if ((fh.bfSize-fh.bfOffBits)%3!=0){
         printf("Error of file structure.");
         exit(-1);
@@ -99,5 +87,5 @@ void converter_no_pallet(struct BITMAPFILEHEADER fh, BYTE *bitmap, char *file_pa
     else {
         printf("It seems that the converting was successful. Congratulations!");
     }
-    free(bitmap);
+    free(f_converted);
 }
