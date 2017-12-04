@@ -48,7 +48,8 @@ int main(int argc, char **argv){
     switch (fi.biBitCount) {
         case 4:
         case 8:     converter_pallet(fh,fi,bitmap,file_path_converted); break;
-        case 24:    converter_no_pallet(fh,bitmap,file_path_converted);
+        case 24:    converter_no_pallet(fh,bitmap,file_path_converted); break;
+        default:    printf("Format is not supported.");
     }
     free(file_path_converted);
     free(file_path_current);
