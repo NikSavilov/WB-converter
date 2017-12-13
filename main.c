@@ -2,27 +2,25 @@
 
 int main(int argc, char **argv){
     char *file_path_converted,*file_path_current;
-    struct FLAG f = {0,0,0};
+    int om_flag = 0;
     for (int k = 1; k < argc;k++){
         if (strcmp(argv[k],"-om") == 0) {
-            f.om = 1;
+            om_flag = 1;
         }
         else if (strstr(argv[k],"-i=") == argv[k]){
-            f.i  = k;
+            file_path_current = malloc(strlen(argv[k]));
+            strcpy(file_path_current,argv[k] + 3);
         }
-        else if (strstr(argv[k],"-o=") == argv[k]){
-            f.o  = k;
+        else if ((strstr(argv[k],"-o=") == argv[k])&&(om_flag!=1)){
+            file_path_converted = malloc(strlen(argv[k]));
+            strcpy(file_path_converted,argv[k] + 3);
         }
     }
-    if (f.om * f.o) {
+    if ((om_flag == 1)&&(file_path_converted!=NULL)) {
         printf("Invalid keys. You can't use overwrite mode and -o key together.\n");
         exit(-1);
     }
-    file_path_converted = malloc(MAX(strlen(argv[f.o]),strlen(argv[f.i]))); // MAX - not to lose a part of path when using -om key.
-    file_path_current = malloc(strlen(argv[f.i]));
-    strcpy(file_path_converted,argv[f.o] + 3);
-    strcpy(file_path_current,argv[f.i] + 3);
-    ((f.om == 1)) ? file_path_converted = file_path_current : 0;
+    ((om_flag == 1)) ? file_path_converted = file_path_current : 0;
     FILE *f_source;
     if ((f_source = fopen(file_path_current, "rb")) == NULL) {
         printf("Can't open file.\n");

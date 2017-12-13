@@ -20,11 +20,6 @@ struct BITMAPINFOHEADER {
 struct CHANNELS {
     BYTE r, g, b, grey;
 };
-struct FLAG {
-    int     om,     // overwrite mode
-            i,      // input folder
-            o;      // output folder
-};
 
 /*___Functions to be described in source.c___*/
 struct BITMAPFILEHEADER read_head(FILE *f_source);
